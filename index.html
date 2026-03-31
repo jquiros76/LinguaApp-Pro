@@ -1048,12 +1048,13 @@ async function toggleAudio() {
       audioSrc = audioCache[text];
     } else {
       // 🔥 2. CACHE EN LOCALSTORAGE
-      const saved = localStorage.getItem("tts_" + text);
+      const key = "tts_" + text.slice(0, 100);
+      const saved = localStorage.getItem(key);
       if (saved) {
         audioSrc = saved;
       } else {
         // 🔥 3. GENERAR AUDIO
-       const res = await fetch('https://englishaudio.digitalworldwide.net/.netlify/functions/tts', {
+       const res = await fetch('/.netlify/functions/tts', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ text })
