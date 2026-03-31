@@ -19,6 +19,17 @@ exports.handler = async (event) => {
 
   const { text, voice = 'nova', speed = 0.9 } = body;
 
+  if (!process.env.OPENAI_API_KEY) {
+  return {
+    statusCode: 200,
+    headers,
+    body: JSON.stringify({
+      audio: null,
+      error: "Modo sin audio (sin API key)"
+    }),
+  };
+}
+
   if (!text || text.trim().length === 0) {
     return { statusCode: 400, headers, body: JSON.stringify({ error: 'Texto requerido' }) };
   }
