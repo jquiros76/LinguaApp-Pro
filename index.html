@@ -1,0 +1,1392 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TOEFL Practice Simulator</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f7f5f0;
+  --surface: #fdfcf9;
+  --card: #ffffff;
+  --ink: #1a1612;
+  --ink2: #5c5448;
+  --muted: #a09688;
+  --border: #e2ddd6;
+  --navy: #1e3a5f;
+  --blue: #2563eb;
+  --teal: #0d9488;
+  --amber: #d97706;
+  --red: #dc2626;
+  --green: #16a34a;
+  --purple: #7c3aed;
+  --score-bg: #1e3a5f;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--ink); font-family: 'IBM Plex Sans', sans-serif; min-height: 100vh; }
+
+/* ── SCREEN SYSTEM ── */
+.screen { display: none; }
+.screen.active { display: block; }
+
+/* ════════ WELCOME SCREEN ════════ */
+.welcome {
+  min-height: 100vh;
+  display: flex; flex-direction: column;
+}
+.welcome-hero {
+  background: var(--navy);
+  color: #fff;
+  padding: 60px 24px 48px;
+  text-align: center;
+  position: relative; overflow: hidden;
+}
+.welcome-hero::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 30% 50%, rgba(37,99,235,0.3) 0%, transparent 60%),
+              radial-gradient(ellipse at 70% 50%, rgba(13,148,136,0.2) 0%, transparent 60%);
+}
+.toefl-logo {
+  display: inline-flex; align-items: center; gap: 10px;
+  background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 8px; padding: 8px 18px; margin-bottom: 28px;
+  font-size: 0.75rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase;
+  color: rgba(255,255,255,0.7); position: relative; z-index: 1;
+}
+.welcome-hero h1 {
+  font-family: 'IBM Plex Serif', serif;
+  font-size: clamp(2rem, 6vw, 3.2rem);
+  font-weight: 700; line-height: 1.15; margin-bottom: 12px;
+  position: relative; z-index: 1;
+}
+.welcome-hero h1 em { color: #60a5fa; font-style: italic; }
+.welcome-hero p { color: rgba(255,255,255,0.6); font-size: 1rem; max-width: 480px; margin: 0 auto 32px; position: relative; z-index: 1; }
+
+.section-pills { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; position: relative; z-index: 1; }
+.sec-pill {
+  display: flex; align-items: center; gap: 7px;
+  background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 20px; padding: 8px 16px;
+  font-size: 0.82rem; font-weight: 500; color: rgba(255,255,255,0.8);
+}
+.sec-pill span { font-size: 1rem; }
+
+.welcome-body { max-width: 680px; margin: 0 auto; padding: 36px 16px 60px; }
+.info-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 28px; }
+.info-card {
+  background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+  padding: 18px 16px; text-align: center;
+}
+.info-card .ic-icon { font-size: 1.6rem; margin-bottom: 8px; }
+.info-card .ic-val { font-family: 'IBM Plex Mono', monospace; font-size: 1.3rem; font-weight: 500; color: var(--navy); }
+.info-card .ic-lbl { font-size: 0.72rem; color: var(--muted); margin-top: 3px; text-transform: uppercase; letter-spacing: 0.05em; }
+
+.score-scale {
+  background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+  padding: 20px; margin-bottom: 24px;
+}
+.score-scale h3 { font-size: 0.82rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin-bottom: 14px; }
+.scale-row { display: flex; gap: 6px; }
+.scale-seg {
+  flex: 1; height: 8px; border-radius: 4px;
+  position: relative;
+}
+.scale-labels { display: flex; justify-content: space-between; margin-top: 8px; font-size: 0.7rem; color: var(--muted); font-family: 'IBM Plex Mono', monospace; }
+.seg-low  { background: linear-gradient(90deg, #dc2626, #f97316); }
+.seg-mid  { background: linear-gradient(90deg, #f97316, #eab308); }
+.seg-good { background: linear-gradient(90deg, #eab308, #22c55e); }
+.seg-high { background: linear-gradient(90deg, #22c55e, #16a34a); }
+.scale-leg { display: flex; gap: 14px; margin-top: 10px; flex-wrap: wrap; }
+.leg-item { display: flex; align-items: center; gap: 5px; font-size: 0.73rem; color: var(--ink2); }
+.leg-dot { width: 10px; height: 10px; border-radius: 3px; }
+
+.start-btn {
+  width: 100%; padding: 16px; border-radius: 12px; border: none;
+  background: var(--navy); color: #fff;
+  font-family: 'IBM Plex Sans', sans-serif; font-size: 1rem; font-weight: 700;
+  cursor: pointer; transition: all 0.2s; letter-spacing: 0.02em;
+}
+.start-btn:hover { background: #162d4f; transform: translateY(-1px); box-shadow: 0 6px 24px rgba(30,58,95,0.35); }
+
+/* ════════ EXAM SCREEN ════════ */
+.exam-header {
+  background: var(--navy); color: #fff;
+  padding: 14px 20px;
+  display: flex; align-items: center; gap: 14px;
+  position: sticky; top: 0; z-index: 100;
+}
+.exam-section-badge {
+  font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+  padding: 4px 12px; border-radius: 4px; flex-shrink: 0;
+}
+.badge-reading  { background: rgba(37,99,235,0.4); color: #93c5fd; }
+.badge-listening{ background: rgba(13,148,136,0.4); color: #5eead4; }
+.badge-writing  { background: rgba(124,58,237,0.4); color: #c4b5fd; }
+.exam-title { font-weight: 600; font-size: 0.9rem; flex: 1; }
+.timer-wrap { display: flex; align-items: center; gap: 7px; flex-shrink: 0; }
+.timer-icon { font-size: 0.85rem; }
+.timer-display {
+  font-family: 'IBM Plex Mono', monospace; font-size: 1rem; font-weight: 500;
+  background: rgba(255,255,255,0.1); padding: 4px 10px; border-radius: 6px;
+  min-width: 56px; text-align: center;
+}
+.timer-display.warning { background: rgba(220,38,38,0.3); color: #fca5a5; }
+.qprog { font-size: 0.78rem; color: rgba(255,255,255,0.5); flex-shrink: 0; }
+
+.exam-body { max-width: 860px; margin: 0 auto; padding: 24px 16px 80px; }
+
+/* Section intro */
+.sec-intro {
+  background: var(--card); border: 1px solid var(--border); border-radius: 16px;
+  padding: 28px; margin-bottom: 24px; text-align: center;
+}
+.sec-intro .si-icon { font-size: 3rem; margin-bottom: 12px; }
+.sec-intro h2 { font-family: 'IBM Plex Serif', serif; font-size: 1.5rem; font-weight: 700; margin-bottom: 8px; }
+.sec-intro p { color: var(--ink2); font-size: 0.88rem; line-height: 1.6; max-width: 480px; margin: 0 auto 20px; }
+.sec-intro-btn {
+  background: var(--navy); color: #fff; border: none; border-radius: 10px;
+  padding: 12px 28px; font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: all 0.2s;
+}
+.sec-intro-btn:hover { background: #162d4f; }
+
+/* ── READING ── */
+.reading-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+@media (max-width: 640px) { .reading-layout { grid-template-columns: 1fr; } }
+
+.passage-box {
+  background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+  overflow: hidden; position: sticky; top: 70px; max-height: calc(100vh - 90px);
+}
+.passage-header {
+  padding: 14px 18px; border-bottom: 1px solid var(--border);
+  font-size: 0.75rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.06em; color: var(--muted);
+}
+.passage-text {
+  padding: 18px; font-family: 'IBM Plex Serif', serif;
+  font-size: 0.9rem; line-height: 1.8; color: var(--ink);
+  overflow-y: auto; max-height: calc(100vh - 160px);
+}
+.passage-text p { margin-bottom: 14px; }
+.passage-text .highlight { background: #fef9c3; border-radius: 2px; }
+
+.questions-col { display: flex; flex-direction: column; gap: 14px; }
+
+/* ── QUESTION CARD ── */
+.qcard {
+  background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+  overflow: hidden; transition: border-color 0.2s;
+}
+.qcard.answered-correct { border-color: var(--green); }
+.qcard.answered-wrong { border-color: var(--red); }
+.qcard-header {
+  padding: 14px 16px 10px;
+  display: flex; align-items: flex-start; gap: 10px;
+}
+.qcard-num {
+  width: 26px; height: 26px; border-radius: 7px; flex-shrink: 0;
+  background: var(--navy); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'IBM Plex Mono', monospace; font-size: 0.75rem; font-weight: 500;
+}
+.qcard.answered-correct .qcard-num { background: var(--green); }
+.qcard.answered-wrong .qcard-num { background: var(--red); }
+.qcard-text { font-size: 0.88rem; line-height: 1.55; color: var(--ink); flex: 1; }
+.qcard-body { padding: 0 16px 16px; }
+
+/* Options */
+.opts { display: flex; flex-direction: column; gap: 7px; }
+.opt {
+  display: flex; align-items: flex-start; gap: 9px;
+  background: var(--surface); border: 1.5px solid var(--border);
+  border-radius: 9px; padding: 10px 12px;
+  cursor: pointer; font-size: 0.85rem; color: var(--ink);
+  transition: all 0.15s; user-select: none; line-height: 1.45;
+}
+.opt:hover:not(.disabled) { border-color: var(--blue); background: #eff6ff; }
+.opt.selected { border-color: var(--blue); background: #dbeafe; }
+.opt.correct { border-color: var(--green); background: #dcfce7; color: #14532d; font-weight: 600; }
+.opt.wrong { border-color: var(--red); background: #fee2e2; color: #7f1d1d; }
+.opt.disabled { cursor: default; }
+.opt-letter {
+  width: 22px; height: 22px; flex-shrink: 0; border-radius: 5px;
+  border: 1.5px solid var(--border); background: var(--card);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'IBM Plex Mono', monospace; font-size: 0.7rem; font-weight: 500;
+  margin-top: 1px;
+}
+.opt.correct .opt-letter { background: var(--green); color: #fff; border-color: var(--green); }
+.opt.wrong .opt-letter { background: var(--red); color: #fff; border-color: var(--red); }
+.opt.selected .opt-letter { background: var(--blue); color: #fff; border-color: var(--blue); }
+
+/* Feedback */
+.qfeedback {
+  margin-top: 10px; padding: 10px 13px; border-radius: 9px;
+  font-size: 0.8rem; line-height: 1.55; display: none;
+}
+.qfeedback.show { display: block; }
+.qfeedback.ok   { background: #dcfce7; border: 1px solid #bbf7d0; color: #14532d; }
+.qfeedback.fail { background: #fee2e2; border: 1px solid #fecaca; color: #7f1d1d; }
+
+/* ── LISTENING ── */
+.audio-player-box {
+  background: var(--navy); border-radius: 16px; padding: 24px;
+  margin-bottom: 20px; color: #fff; text-align: center;
+}
+.ap-title { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: rgba(255,255,255,0.5); margin-bottom: 8px; }
+.ap-topic { font-family: 'IBM Plex Serif', serif; font-size: 1.1rem; font-weight: 600; margin-bottom: 20px; }
+.ap-controls { display: flex; align-items: center; justify-content: center; gap: 14px; }
+.ap-play {
+  width: 54px; height: 54px; border-radius: 50%;
+  background: var(--blue); border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.2rem; color: #fff; transition: all 0.2s;
+}
+.ap-play:hover { background: #1d4ed8; transform: scale(1.06); }
+.ap-play.playing { background: var(--teal); }
+@keyframes eq { 0%,100%{height:6px} 50%{height:22px} }
+.eq-bars { display: flex; align-items: flex-end; gap: 3px; height: 24px; }
+.eq-bar { width: 4px; background: rgba(255,255,255,0.4); border-radius: 2px; height: 6px; }
+.eq-bar.active { background: #5eead4; }
+.eq-bar.a1.active { animation: eq 0.6s 0.0s infinite; }
+.eq-bar.a2.active { animation: eq 0.6s 0.15s infinite; }
+.eq-bar.a3.active { animation: eq 0.6s 0.05s infinite; }
+.eq-bar.a4.active { animation: eq 0.6s 0.2s infinite; }
+.eq-bar.a5.active { animation: eq 0.6s 0.1s infinite; }
+.ap-note { margin-top: 14px; font-size: 0.75rem; color: rgba(255,255,255,0.4); }
+.ap-transcript {
+  margin-top: 16px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 10px; padding: 14px 16px; text-align: left;
+  font-size: 0.82rem; line-height: 1.65; color: rgba(255,255,255,0.7);
+  display: none; max-height: 180px; overflow-y: auto;
+}
+.ap-transcript.show { display: block; }
+.show-transcript-btn {
+  margin-top: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 8px; padding: 6px 14px; color: rgba(255,255,255,0.6);
+  font-size: 0.75rem; cursor: pointer; font-family: 'IBM Plex Sans', sans-serif; transition: all 0.2s;
+}
+.show-transcript-btn:hover { background: rgba(255,255,255,0.18); }
+
+/* ── WRITING ── */
+.writing-prompt {
+  background: var(--card); border: 1px solid var(--border); border-left: 4px solid var(--purple);
+  border-radius: 0 12px 12px 0; padding: 18px 20px; margin-bottom: 16px;
+}
+.writing-prompt .wp-label { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--purple); margin-bottom: 8px; }
+.writing-prompt p { font-size: 0.9rem; line-height: 1.6; color: var(--ink); }
+.writing-tips {
+  background: #fffbeb; border: 1px solid #fde68a; border-radius: 12px;
+  padding: 14px 16px; margin-bottom: 14px;
+}
+.writing-tips h4 { font-size: 0.75rem; font-weight: 700; color: var(--amber); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
+.writing-tips ul { list-style: none; display: flex; flex-direction: column; gap: 5px; }
+.writing-tips li { font-size: 0.8rem; color: #78350f; display: flex; gap: 6px; }
+.writing-tips li::before { content: '→'; color: var(--amber); flex-shrink: 0; }
+.writing-area {
+  width: 100%; min-height: 240px; padding: 16px;
+  background: var(--card); border: 1.5px solid var(--border);
+  border-radius: 12px; font-family: 'IBM Plex Serif', serif;
+  font-size: 0.9rem; line-height: 1.7; color: var(--ink);
+  resize: vertical; outline: none; transition: border-color 0.2s;
+}
+.writing-area:focus { border-color: var(--purple); }
+.writing-meta { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
+.word-count { font-family: 'IBM Plex Mono', monospace; font-size: 0.75rem; color: var(--muted); }
+.word-count.good { color: var(--green); }
+.word-count.low  { color: var(--amber); }
+.writing-rubric {
+  background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+  padding: 16px; margin-top: 14px;
+}
+.writing-rubric h4 { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); margin-bottom: 12px; }
+.rubric-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.rubric-label { font-size: 0.78rem; color: var(--ink2); width: 140px; flex-shrink: 0; }
+.rubric-bar { flex: 1; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+.rubric-fill { height: 100%; border-radius: 3px; transition: width 0.6s ease; }
+.rubric-score { font-family: 'IBM Plex Mono', monospace; font-size: 0.75rem; color: var(--muted); width: 36px; text-align: right; }
+
+/* ── SECTION NAV ── */
+.section-nav {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: var(--card); border-top: 1px solid var(--border);
+  padding: 12px 20px; display: flex; align-items: center; justify-content: space-between;
+  z-index: 99;
+}
+.nav-info { font-size: 0.78rem; color: var(--muted); }
+.nav-btn {
+  padding: 10px 22px; border-radius: 9px; border: none; cursor: pointer;
+  font-family: 'IBM Plex Sans', sans-serif; font-size: 0.88rem; font-weight: 600;
+  transition: all 0.18s;
+}
+.nav-btn-primary { background: var(--navy); color: #fff; }
+.nav-btn-primary:hover { background: #162d4f; }
+.nav-btn-secondary { background: var(--surface); border: 1px solid var(--border); color: var(--ink2); }
+.nav-btn-secondary:hover { border-color: var(--navy); color: var(--navy); }
+
+/* ════════ RESULTS SCREEN ════════ */
+.results-screen { max-width: 760px; margin: 0 auto; padding: 32px 16px 80px; }
+
+.results-hero {
+  background: var(--score-bg); color: #fff; border-radius: 20px;
+  padding: 36px 28px; text-align: center; margin-bottom: 20px; position: relative; overflow: hidden;
+}
+.results-hero::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 50% 0%, rgba(37,99,235,0.4) 0%, transparent 70%);
+}
+.results-hero h2 { font-family: 'IBM Plex Serif', serif; font-size: 1.1rem; color: rgba(255,255,255,0.6); margin-bottom: 6px; position: relative; z-index: 1; }
+.total-score-wrap { position: relative; z-index: 1; margin: 8px 0 16px; }
+.total-score {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: clamp(4rem, 15vw, 7rem); font-weight: 500; line-height: 1;
+  color: #fff;
+}
+.total-score-denom { font-size: 1.2rem; color: rgba(255,255,255,0.4); font-weight: 300; }
+.score-band {
+  display: inline-block; padding: 6px 18px; border-radius: 20px;
+  font-size: 0.88rem; font-weight: 700; letter-spacing: 0.03em;
+  position: relative; z-index: 1; margin-bottom: 12px;
+}
+.band-low    { background: rgba(220,38,38,0.3);  color: #fca5a5; }
+.band-mid    { background: rgba(217,119,6,0.3);  color: #fcd34d; }
+.band-good   { background: rgba(22,163,74,0.3);  color: #86efac; }
+.band-high   { background: rgba(37,99,235,0.3);  color: #93c5fd; }
+.score-bar-wrap { display: flex; align-items: center; gap: 10px; max-width: 400px; margin: 0 auto; position: relative; z-index: 1; }
+.score-bar { flex: 1; height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden; }
+.score-bar-fill { height: 100%; background: linear-gradient(90deg, #3b82f6, #06b6d4); border-radius: 4px; transition: width 1.2s cubic-bezier(.4,0,.2,1); }
+.score-bar-label { font-size: 0.72rem; color: rgba(255,255,255,0.4); font-family: 'IBM Plex Mono', monospace; }
+
+/* Section scores */
+.section-scores { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
+@media(max-width:480px) { .section-scores { grid-template-columns: 1fr; } }
+.sec-score-card {
+  background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+  padding: 18px 16px; text-align: center;
+}
+.sec-score-icon { font-size: 1.6rem; margin-bottom: 8px; }
+.sec-score-name { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin-bottom: 6px; }
+.sec-score-val { font-family: 'IBM Plex Mono', monospace; font-size: 2rem; font-weight: 500; line-height: 1; }
+.sec-score-denom { font-size: 0.75rem; color: var(--muted); }
+.sec-score-bar { margin-top: 10px; height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; }
+.sec-score-fill { height: 100%; border-radius: 3px; transition: width 1s ease 0.3s; }
+.fill-reading  { background: var(--blue); }
+.fill-listening{ background: var(--teal); }
+.fill-writing  { background: var(--purple); }
+
+/* Analysis cards */
+.analysis-card {
+  background: var(--card); border: 1px solid var(--border); border-radius: 16px;
+  overflow: hidden; margin-bottom: 14px;
+}
+.ac-header {
+  padding: 14px 18px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 10px;
+}
+.ac-header h3 { font-size: 0.85rem; font-weight: 700; }
+.ac-icon { font-size: 1.1rem; }
+.ac-body { padding: 16px 18px; }
+
+/* Skill bars */
+.skill-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.skill-label { font-size: 0.8rem; color: var(--ink2); width: 160px; flex-shrink: 0; }
+.skill-bar { flex: 1; height: 7px; background: var(--border); border-radius: 4px; overflow: hidden; }
+.skill-fill { height: 100%; border-radius: 4px; transition: width 0.8s ease; }
+.skill-pct { font-family: 'IBM Plex Mono', monospace; font-size: 0.75rem; color: var(--muted); width: 36px; text-align: right; }
+
+/* Improvement points */
+.improvement-list { display: flex; flex-direction: column; gap: 12px; }
+.improve-item {
+  display: flex; gap: 12px; padding: 14px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 11px;
+}
+.improve-priority {
+  width: 28px; height: 28px; border-radius: 7px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
+}
+.pri-high   { background: #fee2e2; color: var(--red); }
+.pri-medium { background: #fef3c7; color: var(--amber); }
+.pri-low    { background: #dcfce7; color: var(--green); }
+.improve-content h4 { font-size: 0.85rem; font-weight: 600; margin-bottom: 4px; }
+.improve-content p  { font-size: 0.78rem; color: var(--ink2); line-height: 1.5; }
+
+/* Lessons */
+.lessons-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+@media(max-width:480px) { .lessons-grid { grid-template-columns: 1fr; } }
+.lesson-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 11px;
+  padding: 14px; cursor: pointer; transition: all 0.18s;
+}
+.lesson-card:hover { border-color: var(--navy); transform: translateY(-1px); }
+.lesson-type { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); margin-bottom: 6px; }
+.lesson-title { font-size: 0.85rem; font-weight: 600; margin-bottom: 4px; line-height: 1.35; }
+.lesson-desc { font-size: 0.75rem; color: var(--ink2); line-height: 1.45; }
+.lesson-tag {
+  display: inline-block; margin-top: 8px; padding: 2px 8px; border-radius: 4px;
+  font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
+}
+.tag-reading  { background: #dbeafe; color: var(--blue); }
+.tag-listening{ background: #ccfbf1; color: var(--teal); }
+.tag-writing  { background: #ede9fe; color: var(--purple); }
+.tag-general  { background: #f3f4f6; color: #374151; }
+
+.try-again-btn {
+  width: 100%; padding: 15px; border-radius: 12px; border: none;
+  background: var(--navy); color: #fff;
+  font-family: 'IBM Plex Sans', sans-serif; font-size: 0.95rem; font-weight: 700;
+  cursor: pointer; transition: all 0.2s; margin-top: 8px;
+}
+.try-again-btn:hover { background: #162d4f; }
+
+@keyframes fadeUp { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
+.analysis-card, .sec-score-card, .results-hero { animation: fadeUp 0.4s ease both; }
+.sec-score-card:nth-child(2){animation-delay:.06s} .sec-score-card:nth-child(3){animation-delay:.12s}
+.analysis-card:nth-child(2){animation-delay:.08s} .analysis-card:nth-child(3){animation-delay:.16s}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════
+     SCREEN 1 – WELCOME
+══════════════════════════════════════════ -->
+<div class="screen active" id="screen-welcome">
+  <div class="welcome">
+    <div class="welcome-hero">
+      <div class="toefl-logo">📋 TOEFL Practice Simulator</div>
+      <h1>Prepárate para el<br><em>TOEFL iBT</em></h1>
+      <p>Simulacro nivel B1–B2 con calificación oficial, análisis detallado y plan de mejora personalizado.</p>
+      <div class="section-pills">
+        <div class="sec-pill"><span>📖</span> Reading · 30 pts</div>
+        <div class="sec-pill"><span>👂</span> Listening · 30 pts</div>
+        <div class="sec-pill"><span>✍️</span> Writing · 30 pts</div>
+      </div>
+    </div>
+    <div class="welcome-body">
+      <div class="info-grid">
+        <div class="info-card">
+          <div class="ic-icon">⏱️</div>
+          <div class="ic-val">~30 min</div>
+          <div class="ic-lbl">Duración total</div>
+        </div>
+        <div class="info-card">
+          <div class="ic-icon">❓</div>
+          <div class="ic-val">21 ítems</div>
+          <div class="ic-lbl">Preguntas</div>
+        </div>
+        <div class="info-card">
+          <div class="ic-icon">🎯</div>
+          <div class="ic-val">0 – 90</div>
+          <div class="ic-lbl">Escala de puntaje</div>
+        </div>
+      </div>
+      <div class="score-scale">
+        <h3>Escala de puntaje TOEFL</h3>
+        <div class="scale-row">
+          <div class="scale-seg seg-low"></div>
+          <div class="scale-seg seg-mid"></div>
+          <div class="scale-seg seg-good"></div>
+          <div class="scale-seg seg-high"></div>
+        </div>
+        <div class="scale-labels"><span>0</span><span>30</span><span>60</span><span>75</span><span>90</span></div>
+        <div class="scale-leg">
+          <div class="leg-item"><div class="leg-dot" style="background:#dc2626"></div> 0–30 Básico</div>
+          <div class="leg-item"><div class="leg-dot" style="background:#f97316"></div> 31–54 Intermedio bajo</div>
+          <div class="leg-item"><div class="leg-dot" style="background:#eab308"></div> 55–74 Intermedio</div>
+          <div class="leg-item"><div class="leg-dot" style="background:#16a34a"></div> 75–90 Avanzado</div>
+        </div>
+      </div>
+      <button class="start-btn" onclick="goToSection(0)">Comenzar simulacro →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SCREEN 2 – EXAM
+══════════════════════════════════════════ -->
+<div class="screen" id="screen-exam">
+  <div class="exam-header">
+    <span class="exam-section-badge" id="exam-badge">Reading</span>
+    <span class="exam-title" id="exam-title">Reading Comprehension</span>
+    <div class="timer-wrap">
+      <span class="timer-icon">⏱</span>
+      <div class="timer-display" id="timer-display">20:00</div>
+    </div>
+    <span class="qprog" id="q-prog"></span>
+  </div>
+  <div class="exam-body" id="exam-body"></div>
+  <div class="section-nav">
+    <span class="nav-info" id="nav-info"></span>
+    <div style="display:flex;gap:8px">
+      <button class="nav-btn nav-btn-secondary" id="btn-prev-sec" onclick="prevSection()" style="display:none">← Anterior</button>
+      <button class="nav-btn nav-btn-primary" id="btn-next-sec" onclick="nextSection()">Siguiente sección →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SCREEN 3 – RESULTS
+══════════════════════════════════════════ -->
+<div class="screen" id="screen-results">
+  <div class="results-screen" id="results-content"></div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════
+//  EXAM DATA
+// ════════════════════════════════════════════════════
+const EXAM = {
+  reading: {
+    title: 'Reading Comprehension',
+    badge: 'Reading',
+    badgeClass: 'badge-reading',
+    time: 20 * 60,
+    maxScore: 30,
+    passage: {
+      title: 'The Role of Sleep in Learning and Memory',
+      text: `<p>Sleep is one of the most fundamental biological needs of the human body. While many people view sleep as simply a period of rest, scientists have discovered that it plays a critical role in cognitive function, particularly in how we learn and retain information.</p>
+<p>During sleep, the brain undergoes a remarkable process called memory consolidation. This process involves the transfer of information from short-term memory to long-term memory. Research conducted at Harvard Medical School found that people who slept after learning a new skill performed significantly better on tests 12 hours later than those who stayed awake during the same period.</p>
+<p>There are two main stages of sleep that contribute to memory formation: slow-wave sleep (SWS) and rapid eye movement (REM) sleep. Slow-wave sleep, which occurs in the early part of the night, is particularly important for consolidating declarative memories—facts and events that we can consciously recall. REM sleep, which predominates in the latter part of the night, is associated with procedural memories—skills and habits.</p>
+<p>Sleep deprivation has serious consequences for learning. Students who regularly sacrifice sleep to study actually perform worse on examinations than those who get adequate rest. When we are sleep-deprived, our ability to focus, solve problems, and retain new information decreases dramatically. A study published in the journal <em>Nature</em> demonstrated that just one night of poor sleep can reduce the brain's capacity to form new memories by up to 40%.</p>
+<p>Experts recommend that adults get between seven and nine hours of sleep per night for optimal cognitive performance. For students and professionals who need to learn new material, the timing of sleep is also important. Sleeping within 24 hours of learning new information significantly improves retention compared to waiting longer.</p>`
+    },
+    questions: [
+      {
+        q: "According to the passage, what is 'memory consolidation'?",
+        opts: [
+          "The process of forgetting unnecessary information during sleep",
+          "The transfer of information from short-term to long-term memory",
+          "A type of sleep disorder that affects students",
+          "The brain's ability to stay awake for longer periods"
+        ],
+        ans: 1,
+        exp: "The passage states: 'memory consolidation...involves the transfer of information from short-term memory to long-term memory.'"
+      },
+      {
+        q: "Which type of sleep is most associated with learning facts and events?",
+        opts: [
+          "REM sleep",
+          "Light sleep",
+          "Slow-wave sleep (SWS)",
+          "Deep sleep only"
+        ],
+        ans: 2,
+        exp: "The passage says slow-wave sleep 'is particularly important for consolidating declarative memories—facts and events that we can consciously recall.'"
+      },
+      {
+        q: "The Harvard Medical School research mentioned in the passage found that:",
+        opts: [
+          "Sleeping after learning had no effect on performance",
+          "People who stayed awake performed better on tests",
+          "Sleeping after learning led to significantly better test performance",
+          "Students should study for 12 hours without sleep"
+        ],
+        ans: 2,
+        exp: "'People who slept after learning a new skill performed significantly better on tests 12 hours later than those who stayed awake.'"
+      },
+      {
+        q: "According to the passage, what happens to memory formation after one night of poor sleep?",
+        opts: [
+          "It improves by 40%",
+          "It is reduced by up to 40%",
+          "It remains the same",
+          "It doubles in speed"
+        ],
+        ans: 1,
+        exp: "'Just one night of poor sleep can reduce the brain's capacity to form new memories by up to 40%.'"
+      },
+      {
+        q: "The word 'predominates' in paragraph 3 is closest in meaning to:",
+        opts: [
+          "disappears",
+          "decreases",
+          "is most common",
+          "begins"
+        ],
+        ans: 2,
+        exp: "'Predominates' means to be the main or most common element. REM sleep predominates = REM sleep is most common in the latter part of the night."
+      },
+      {
+        q: "What is the author's main purpose in writing this passage?",
+        opts: [
+          "To argue that students should not study at night",
+          "To explain how sleep affects learning and memory",
+          "To compare different types of sleep disorders",
+          "To describe a specific research experiment in detail"
+        ],
+        ans: 1,
+        exp: "The entire passage discusses the role of sleep in cognitive function, learning, and memory—explaining the science behind it."
+      },
+      {
+        q: "Which of the following can be inferred from the passage?",
+        opts: [
+          "Sleeping more than 9 hours has no negative effects",
+          "Only children need sleep for memory consolidation",
+          "Reviewing material and then sleeping is an effective study strategy",
+          "REM sleep is more important than slow-wave sleep"
+        ],
+        ans: 2,
+        exp: "The passage states 'sleeping within 24 hours of learning new information significantly improves retention,' implying that sleep after studying is beneficial."
+      }
+    ]
+  },
+
+  listening: {
+    title: 'Listening Comprehension',
+    badge: 'Listening',
+    badgeClass: 'badge-listening',
+    time: 15 * 60,
+    maxScore: 30,
+    audio: {
+      topic: 'Campus Conversation: Changing a Major',
+      transcript: `Student: Hi, Professor Davis. Do you have a few minutes? I really need to talk to someone about my situation.
+Professor: Of course, come in. What's on your mind?
+Student: Well, I've been studying business for two years now, but lately I've been thinking about switching to environmental science. I'm just not sure if it's the right decision.
+Professor: That's a significant change. What's making you consider it?
+Student: Honestly, I took an environmental studies course last semester as an elective, and I found it fascinating. I stayed up late reading the textbook, which has never happened with my business courses.
+Professor: That's actually a very telling sign. When you're genuinely interested in a subject, learning doesn't feel like work.
+Student: Exactly! But I'm worried about the extra time it might take to graduate, and my parents invested a lot in my business degree path.
+Professor: I understand those concerns. Have you looked into whether any of your current credits might transfer to environmental science?
+Student: I checked with the registrar's office, and about 60% of my credits would count toward the new program. So I might only need one extra semester.
+Professor: That doesn't sound too bad. And regarding your parents—is their concern mainly financial, or do they think business is a better career choice?
+Student: Both, I think. But I've done some research, and environmental consulting jobs actually pay very well, especially with a business background as a complement.
+Professor: That's a great point. Your business knowledge could actually be an asset in environmental work—understanding economics and management is valuable in sustainability roles.
+Student: I hadn't thought about it that way. So you think I should switch?
+Professor: I can't make that decision for you, but what I will say is: passion matters a lot. Students who study what they love tend to work harder and achieve more. Maybe talk honestly with your parents and show them the career data you found.`
+    },
+    questions: [
+      {
+        q: "Why is the student visiting Professor Davis?",
+        opts: [
+          "To get a letter of recommendation",
+          "To discuss the possibility of changing his major",
+          "To complain about a business course",
+          "To ask for an extension on an assignment"
+        ],
+        ans: 1,
+        exp: "The student says: 'I've been thinking about switching to environmental science. I'm just not sure if it's the right decision.'"
+      },
+      {
+        q: "What made the student consider changing his major?",
+        opts: [
+          "He failed his business courses",
+          "A professor recommended environmental science",
+          "He found an elective course in environmental studies fascinating",
+          "His parents suggested the change"
+        ],
+        ans: 2,
+        exp: "'I took an environmental studies course last semester as an elective, and I found it fascinating. I stayed up late reading the textbook.'"
+      },
+      {
+        q: "According to the conversation, what did the student find out at the registrar's office?",
+        opts: [
+          "None of his credits would transfer",
+          "He would need two extra years to graduate",
+          "About 60% of his credits would count toward the new program",
+          "The environmental science program was full"
+        ],
+        ans: 2,
+        exp: "'About 60% of my credits would count toward the new program. So I might only need one extra semester.'"
+      },
+      {
+        q: "What does Professor Davis suggest about the student's business background?",
+        opts: [
+          "It would be completely useless in environmental work",
+          "It could be an asset in environmental and sustainability roles",
+          "He should finish his business degree before switching",
+          "Business knowledge is irrelevant to environmental consulting"
+        ],
+        ans: 1,
+        exp: "'Your business knowledge could actually be an asset in environmental work—understanding economics and management is valuable in sustainability roles.'"
+      },
+      {
+        q: "What is Professor Davis's overall attitude toward the student's potential change?",
+        opts: [
+          "Strongly opposed to it",
+          "Neutral and unwilling to advise",
+          "Supportive, while encouraging the student to decide for himself",
+          "Concerned mainly about the financial implications"
+        ],
+        ans: 2,
+        exp: "The professor says 'passion matters a lot' and advises talking to parents, while clarifying 'I can't make that decision for you'—supportive but respecting autonomy."
+      },
+      {
+        q: "What can be inferred about the student from the conversation?",
+        opts: [
+          "He has already officially changed his major",
+          "He is struggling academically in business courses",
+          "He is thoughtful and has researched his options before deciding",
+          "His parents are fully supportive of any major he chooses"
+        ],
+        ans: 2,
+        exp: "He visited the registrar's office and researched career data for environmental consulting, showing he is prepared and thoughtful."
+      },
+      {
+        q: "What does the professor imply when he says 'That's actually a very telling sign'?",
+        opts: [
+          "The student's reading habit is unusual and concerning",
+          "Reading textbooks late is a sign of poor time management",
+          "Natural enthusiasm for a subject is a strong indicator of genuine interest",
+          "Business courses are more interesting than environmental science"
+        ],
+        ans: 2,
+        exp: "He follows up with 'When you're genuinely interested in a subject, learning doesn't feel like work,' meaning staying up to read willingly shows real passion."
+      }
+    ]
+  },
+
+  writing: {
+    title: 'Writing Task',
+    badge: 'Writing',
+    badgeClass: 'badge-writing',
+    time: 30 * 60,
+    maxScore: 30,
+    tasks: [
+      {
+        type: 'Independent Task',
+        prompt: 'Do you agree or disagree with the following statement? <strong>"Students learn more effectively when they study independently than when they study in groups."</strong> Use specific reasons and examples to support your answer. Write at least 150 words.',
+        minWords: 150,
+        tips: [
+          'Escribe una introducción clara con tu posición (agree/disagree)',
+          'Desarrolla 2–3 argumentos con ejemplos específicos',
+          'Usa conectores: however, furthermore, in addition, on the other hand',
+          'Escribe una conclusión que resuma tu argumento principal',
+          'Apunta a 200–300 palabras para una buena puntuación'
+        ]
+      }
+    ]
+  }
+};
+
+// ════════════════════════════════════════════════════
+//  STATE
+// ════════════════════════════════════════════════════
+const SECTIONS = ['reading', 'listening', 'writing'];
+let curSection = 0;
+let timers = {};
+let timerInterval = null;
+let answers = { reading: {}, listening: {}, writing: { text: '', wordCount: 0 } };
+let scores   = { reading: 0, listening: 0, writing: 0 };
+let sectionTimes = { reading: 0, listening: 0, writing: 0 };
+let speaking = false;
+let transcriptShown = false;
+
+// ════════════════════════════════════════════════════
+//  NAVIGATION
+// ════════════════════════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + id).classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function goToSection(idx) {
+  curSection = idx;
+  showScreen('exam');
+  renderSectionIntro(SECTIONS[idx]);
+}
+
+function prevSection() {
+  if (curSection > 0) { saveSection(); curSection--; renderSection(SECTIONS[curSection]); }
+}
+
+function nextSection() {
+  saveSection();
+  if (curSection < SECTIONS.length - 1) {
+    curSection++;
+    renderSectionIntro(SECTIONS[curSection]);
+  } else {
+    computeScores();
+    renderResults();
+    showScreen('results');
+  }
+}
+
+function saveSection() {
+  clearInterval(timerInterval);
+  const sec = SECTIONS[curSection];
+  sectionTimes[sec] = timers[sec] || 0;
+}
+
+// ════════════════════════════════════════════════════
+//  SECTION INTRO
+// ════════════════════════════════════════════════════
+const SEC_META = {
+  reading:   { icon:'📖', name:'Reading', desc:'Leerás un texto académico y responderás 7 preguntas de comprensión. Tiempo: 20 minutos.', color:'var(--blue)' },
+  listening: { icon:'👂', name:'Listening', desc:'Escucharás una conversación universitaria (texto disponible) y responderás 7 preguntas. Tiempo: 15 minutos.', color:'var(--teal)' },
+  writing:   { icon:'✍️', name:'Writing', desc:'Escribirás un ensayo de opinión de al menos 150 palabras sobre un tema dado. Tiempo: 30 minutos.', color:'var(--purple)' }
+};
+
+function renderSectionIntro(sec) {
+  stopTimer();
+  const m = SEC_META[sec];
+  const d = EXAM[sec];
+  const body = document.getElementById('exam-body');
+  body.innerHTML = `
+    <div class="sec-intro">
+      <div class="si-icon">${m.icon}</div>
+      <h2>Sección: ${m.name}</h2>
+      <p>${m.desc}</p>
+      <button class="sec-intro-btn" onclick="renderSection('${sec}')">Comenzar ${m.name} →</button>
+    </div>`;
+  updateHeader(sec, '');
+  document.getElementById('timer-display').textContent = formatTime(d.time);
+  document.getElementById('nav-info').textContent = `Sección ${curSection + 1} de ${SECTIONS.length}`;
+  document.getElementById('btn-prev-sec').style.display = curSection > 0 ? '' : 'none';
+  document.getElementById('btn-next-sec').textContent = curSection < SECTIONS.length - 1 ? 'Siguiente sección →' : 'Ver resultados →';
+}
+
+function updateHeader(sec, qProg) {
+  const d = EXAM[sec];
+  document.getElementById('exam-badge').textContent = d.badge;
+  document.getElementById('exam-badge').className = `exam-section-badge ${d.badgeClass}`;
+  document.getElementById('exam-title').textContent = d.title;
+  document.getElementById('q-prog').textContent = qProg;
+}
+
+// ════════════════════════════════════════════════════
+//  RENDER SECTIONS
+// ════════════════════════════════════════════════════
+function renderSection(sec) {
+  updateHeader(sec, '');
+  if (sec === 'reading')   renderReading();
+  if (sec === 'listening') renderListening();
+  if (sec === 'writing')   renderWriting();
+  startTimer(sec);
+}
+
+/* ── READING ── */
+function renderReading() {
+  const d = EXAM.reading;
+  const qs = d.questions.map((q, i) => buildQCard(q, i, 'reading')).join('');
+  document.getElementById('exam-body').innerHTML = `
+    <div class="reading-layout">
+      <div class="passage-box">
+        <div class="passage-header">📄 ${d.passage.title}</div>
+        <div class="passage-text">${d.passage.text}</div>
+      </div>
+      <div class="questions-col">${qs}</div>
+    </div>`;
+  document.getElementById('q-prog').textContent = `0 / ${d.questions.length}`;
+}
+
+/* ── LISTENING ── */
+function renderListening() {
+  const d = EXAM.listening;
+  const qs = d.questions.map((q, i) => buildQCard(q, i, 'listening')).join('');
+  document.getElementById('exam-body').innerHTML = `
+    <div class="audio-player-box">
+      <div class="ap-title">🎧 Audio Track</div>
+      <div class="ap-topic">${d.audio.topic}</div>
+      <div class="ap-controls">
+        <div class="eq-bars">
+          <div class="eq-bar a1" id="eq1"></div>
+          <div class="eq-bar a2" id="eq2"></div>
+          <div class="eq-bar a3" id="eq3"></div>
+          <div class="eq-bar a4" id="eq4"></div>
+          <div class="eq-bar a5" id="eq5"></div>
+        </div>
+        <button class="ap-play" id="ap-play-btn" onclick="toggleAudio()">▶</button>
+        <div class="eq-bars">
+          <div class="eq-bar a3" id="eq6"></div>
+          <div class="eq-bar a1" id="eq7"></div>
+          <div class="eq-bar a4" id="eq8"></div>
+          <div class="eq-bar a2" id="eq9"></div>
+          <div class="eq-bar a5" id="eq10"></div>
+        </div>
+      </div>
+      <div class="ap-note">Toca ▶ para escuchar. Puedes leer el transcript como apoyo.</div>
+      <button class="show-transcript-btn" onclick="toggleTranscript()">📄 Mostrar transcript</button>
+      <div class="ap-transcript" id="ap-transcript">${d.audio.transcript.replace(/\n/g,'<br>')}</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:14px">${qs}</div>`;
+}
+
+/* ── WRITING ── */
+function renderWriting() {
+  const task = EXAM.writing.tasks[0];
+  document.getElementById('exam-body').innerHTML = `
+    <div class="writing-prompt">
+      <div class="wp-label">✍️ Writing Task – Independent</div>
+      <p>${task.prompt}</p>
+    </div>
+    <div class="writing-tips">
+      <h4>💡 Consejos para una buena respuesta</h4>
+      <ul>${task.tips.map(t => `<li>${t}</li>`).join('')}</ul>
+    </div>
+    <textarea class="writing-area" id="writing-textarea" placeholder="Start writing your response here..." oninput="updateWordCount()"></textarea>
+    <div class="writing-meta">
+      <span class="word-count" id="word-count-display">0 palabras (mínimo: ${task.minWords})</span>
+    </div>
+    <div class="writing-rubric">
+      <h4>📊 Criterios de evaluación TOEFL Writing</h4>
+      <div class="rubric-row"><span class="rubric-label">Desarrollo de ideas</span><div class="rubric-bar"><div class="rubric-fill" style="width:0%;background:var(--purple)"></div></div><span class="rubric-score">–</span></div>
+      <div class="rubric-row"><span class="rubric-label">Organización</span><div class="rubric-bar"><div class="rubric-fill" style="width:0%;background:var(--blue)"></div></div><span class="rubric-score">–</span></div>
+      <div class="rubric-row"><span class="rubric-label">Vocabulario</span><div class="rubric-bar"><div class="rubric-fill" style="width:0%;background:var(--teal)"></div></div><span class="rubric-score">–</span></div>
+      <div class="rubric-row"><span class="rubric-label">Gramática</span><div class="rubric-bar"><div class="rubric-fill" style="width:0%;background:var(--amber)"></div></div><span class="rubric-score">–</span></div>
+    </div>`;
+  // Restore any saved text
+  if (answers.writing.text) {
+    document.getElementById('writing-textarea').value = answers.writing.text;
+    updateWordCount();
+  }
+}
+
+// ════════════════════════════════════════════════════
+//  QUESTION CARD BUILDER
+// ════════════════════════════════════════════════════
+function buildQCard(q, i, sec) {
+  const letters = ['A','B','C','D'];
+  const opts = q.opts.map((o, oi) =>
+    `<div class="opt" id="opt-${sec}-${i}-${oi}" onclick="pickOpt('${sec}',${i},${oi})">
+      <span class="opt-letter">${letters[oi]}</span>${o}
+    </div>`).join('');
+  return `
+    <div class="qcard" id="qcard-${sec}-${i}">
+      <div class="qcard-header">
+        <div class="qcard-num" id="qnum-${sec}-${i}">${i+1}</div>
+        <div class="qcard-text">${q.q}</div>
+      </div>
+      <div class="qcard-body">
+        <div class="opts">${opts}</div>
+        <div class="qfeedback" id="qfb-${sec}-${i}"></div>
+      </div>
+    </div>`;
+}
+
+// ════════════════════════════════════════════════════
+//  INTERACTIONS
+// ════════════════════════════════════════════════════
+function pickOpt(sec, qi, oi) {
+  const data = (sec === 'reading') ? EXAM.reading : EXAM.listening;
+  const q = data.questions[qi];
+  if (answers[sec][qi] !== undefined) return;
+
+  answers[sec][qi] = oi;
+  const correct = oi === q.ans;
+
+  ['A','B','C','D'].forEach((_, i) => {
+    const el = document.getElementById(`opt-${sec}-${qi}-${i}`);
+    if (!el) return;
+    el.classList.add('disabled');
+    if (i === q.ans) el.classList.add('correct');
+    else if (i === oi && !correct) el.classList.add('wrong');
+  });
+
+  const card = document.getElementById(`qcard-${sec}-${qi}`);
+  const num  = document.getElementById(`qnum-${sec}-${qi}`);
+  const fb   = document.getElementById(`qfb-${sec}-${qi}`);
+  card.classList.add(correct ? 'answered-correct' : 'answered-wrong');
+  num.textContent = correct ? '✓' : '✗';
+  fb.innerHTML = `${correct ? '✅ Correct!' : `❌ Correct answer: <strong>${q.opts[q.ans]}</strong>`}<br><span style="margin-top:4px;display:block;opacity:0.85">${q.exp}</span>`;
+  fb.className = `qfeedback show ${correct ? 'ok' : 'fail'}`;
+
+  // Update progress
+  const total = data.questions.length;
+  const done  = Object.keys(answers[sec]).length;
+  document.getElementById('q-prog').textContent = `${done} / ${total}`;
+}
+
+function updateWordCount() {
+  const ta = document.getElementById('writing-textarea');
+  if (!ta) return;
+  const text = ta.value.trim();
+  answers.writing.text = text;
+  const words = text ? text.split(/\s+/).filter(w => w.length > 0).length : 0;
+  answers.writing.wordCount = words;
+  const minW = EXAM.writing.tasks[0].minWords;
+  const el = document.getElementById('word-count-display');
+  el.textContent = `${words} palabras (mínimo: ${minW})`;
+  el.className = `word-count ${words >= minW ? 'good' : 'low'}`;
+  // Live rubric update
+  updateWritingRubric(words, text);
+}
+
+function updateWritingRubric(words, text) {
+  const fills = document.querySelectorAll('.rubric-fill');
+  const scores = document.querySelectorAll('.rubric-score');
+  if (!fills.length) return;
+  const wPct = Math.min(100, (words / 280) * 100);
+  // Simple heuristics
+  const hasConnectors = /however|furthermore|in addition|on the other hand|therefore|moreover|although|despite|because|since/i.test(text);
+  const hasParagraphs = (text.split('\n').filter(l => l.trim().length > 30).length >= 2);
+  const vocabScore = Math.min(100, wPct * 0.85 + (hasConnectors ? 15 : 0));
+  const orgScore   = Math.min(100, (hasParagraphs ? 60 : 30) + wPct * 0.3);
+  const devScore   = Math.min(100, wPct * 0.9);
+  const gramScore  = Math.min(100, wPct * 0.7 + 25);
+  const vals = [devScore, orgScore, vocabScore, gramScore];
+  vals.forEach((v, i) => {
+    if (fills[i]) fills[i].style.width = v + '%';
+    if (scores[i]) scores[i].textContent = Math.round(v) + '%';
+  });
+}
+
+const audioCache = {};
+
+async function toggleAudio() {
+  const btn = document.getElementById('ap-play-btn');
+  const eqs = document.querySelectorAll('.eq-bar');
+  const text = EXAM.listening.audio.transcript;
+
+  if (speaking) {
+    speaking = false;
+    btn.textContent = '▶';
+    btn.classList.remove('playing');
+    eqs.forEach(e => e.classList.remove('active'));
+    return;
+  }
+
+  try {
+    let audioSrc;
+
+    // 🔥 1. CACHE EN MEMORIA
+    if (audioCache[text]) {
+      audioSrc = audioCache[text];
+    } else {
+      // 🔥 2. CACHE EN LOCALSTORAGE
+      const saved = localStorage.getItem("tts_" + text);
+      if (saved) {
+        audioSrc = saved;
+      } else {
+        // 🔥 3. GENERAR AUDIO
+       const res = await fetch('https://englishaudio.digitalworldwide.net/.netlify/functions/tts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text })
+        });
+
+        const data = await res.json();
+
+        if (!data.audio) {
+          console.error("No audio");
+          return;
+        }
+
+        audioSrc = data.audio;
+
+        // guardar cache
+        audioCache[text] = audioSrc;
+        localStorage.setItem("tts_" + text, audioSrc);
+      }
+    }
+
+    const audio = new Audio(audioSrc);
+
+    speaking = true;
+    btn.textContent = '⏹';
+    btn.classList.add('playing');
+    eqs.forEach(e => e.classList.add('active'));
+
+    audio.onended = () => {
+      speaking = false;
+      btn.textContent = '▶';
+      btn.classList.remove('playing');
+      eqs.forEach(e => e.classList.remove('active'));
+    };
+
+    audio.play();
+
+  } catch (err) {
+    console.error("TTS error:", err);
+  }
+}
+
+function toggleTranscript() {
+  const t = document.getElementById('ap-transcript');
+  const b = document.querySelector('.show-transcript-btn');
+  if (!t) return;
+  transcriptShown = !transcriptShown;
+  t.classList.toggle('show', transcriptShown);
+  b.textContent = transcriptShown ? '📄 Ocultar transcript' : '📄 Mostrar transcript';
+}
+
+// ════════════════════════════════════════════════════
+//  TIMER
+// ════════════════════════════════════════════════════
+function startTimer(sec) {
+  stopTimer();
+  if (!timers[sec]) timers[sec] = EXAM[sec].time;
+  timerInterval = setInterval(() => {
+    timers[sec]--;
+    if (timers[sec] <= 0) { timers[sec] = 0; stopTimer(); }
+    const el = document.getElementById('timer-display');
+    el.textContent = formatTime(timers[sec]);
+    el.className = `timer-display${timers[sec] < 120 ? ' warning' : ''}`;
+  }, 1000);
+}
+function stopTimer() { clearInterval(timerInterval); }
+function formatTime(s) {
+  const m = Math.floor(s / 60), sec = s % 60;
+  return `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+}
+
+// ════════════════════════════════════════════════════
+//  SCORING
+// ════════════════════════════════════════════════════
+function computeScores() {
+  // Reading: 7 questions, max 30 pts → ~4.3 each
+  let rCorrect = 0;
+  EXAM.reading.questions.forEach((q, i) => { if (answers.reading[i] === q.ans) rCorrect++; });
+  scores.reading = Math.round((rCorrect / EXAM.reading.questions.length) * 30);
+
+  // Listening: 7 questions, max 30 pts
+  let lCorrect = 0;
+  EXAM.listening.questions.forEach((q, i) => { if (answers.listening[i] === q.ans) lCorrect++; });
+  scores.listening = Math.round((lCorrect / EXAM.listening.questions.length) * 30);
+
+  // Writing: score based on word count + heuristics
+  const wc = answers.writing.wordCount;
+  const text = answers.writing.text || '';
+  const hasConnectors = /however|furthermore|in addition|on the other hand|therefore|moreover|although|despite|because|since/i.test(text);
+  const hasIntro = /i (agree|disagree|believe|think|feel)/i.test(text);
+  const hasConcl  = /in conclusion|to sum up|in summary|therefore|overall/i.test(text);
+  let wScore = 0;
+  if (wc >= 250) wScore = 26;
+  else if (wc >= 200) wScore = 22;
+  else if (wc >= 150) wScore = 17;
+  else if (wc >= 100) wScore = 12;
+  else if (wc >= 50)  wScore = 7;
+  else wScore = 2;
+  if (hasConnectors) wScore = Math.min(30, wScore + 2);
+  if (hasIntro) wScore = Math.min(30, wScore + 1);
+  if (hasConcl)  wScore = Math.min(30, wScore + 1);
+  scores.writing = wScore;
+}
+
+// ════════════════════════════════════════════════════
+//  RESULTS
+// ════════════════════════════════════════════════════
+function renderResults() {
+  const total = scores.reading + scores.listening + scores.writing;
+  const maxTotal = 90;
+  const pct = Math.round((total / maxTotal) * 100);
+
+  let band, bandClass, bandEmoji;
+  if (total >= 75) { band = 'Advanced – C1'; bandClass = 'band-high'; bandEmoji = '🏆'; }
+  else if (total >= 55) { band = 'Intermediate – B2'; bandClass = 'band-good'; bandEmoji = '🥇'; }
+  else if (total >= 35) { band = 'Intermediate – B1'; bandClass = 'band-mid'; bandEmoji = '📈'; }
+  else { band = 'Basic – A2'; bandClass = 'band-low'; bandEmoji = '📚'; }
+
+  // Per-section data
+  const rCorr = EXAM.reading.questions.filter((q,i) => answers.reading[i] === q.ans).length;
+  const lCorr = EXAM.listening.questions.filter((q,i) => answers.listening[i] === q.ans).length;
+  const rPct  = Math.round((rCorr / 7) * 100);
+  const lPct  = Math.round((lCorr / 7) * 100);
+  const wPct2 = Math.round((scores.writing / 30) * 100);
+  const wc    = answers.writing.wordCount;
+
+  // Skill analysis
+  const skills = [
+    { label: 'Comprensión lectora',    pct: rPct,  color: 'var(--blue)' },
+    { label: 'Vocabulario en contexto',pct: Math.round(rPct * 0.9), color: 'var(--blue)' },
+    { label: 'Comprensión auditiva',   pct: lPct,  color: 'var(--teal)' },
+    { label: 'Inferencia',             pct: Math.round(lPct * 0.85), color: 'var(--teal)' },
+    { label: 'Expresión escrita',      pct: wPct2, color: 'var(--purple)' },
+    { label: 'Uso de conectores',      pct: /however|furthermore|in addition|therefore|moreover/i.test(answers.writing.text||'') ? Math.min(100, wPct2 + 10) : Math.max(0, wPct2 - 15), color: 'var(--purple)' },
+  ];
+
+  // Improvement points
+  const improvements = [];
+  if (rPct < 70) improvements.push({ pri:'high', title:'Lectura: estrategias de comprensión', desc:'Practica leer párrafos académicos e identificar la idea principal, detalles de apoyo y la intención del autor.', tag:'reading' });
+  if (rPct < 85) improvements.push({ pri:'medium', title:'Vocabulario académico (AWL)', desc:'Estudia el Academic Word List (AWL). Palabras como "consolidation", "predominate", "deprivation" aparecen con frecuencia.', tag:'reading' });
+  if (lPct < 70) improvements.push({ pri:'high', title:'Listening: toma de notas activa', desc:'Mientras escuchas, anota nombres, números, relaciones de causa-efecto. En el TOEFL real puedes tomar notas.', tag:'listening' });
+  if (lPct < 85) improvements.push({ pri:'medium', title:'Inferencia en conversaciones', desc:'Practica identificar el tono y la actitud del hablante, no solo los hechos literales que menciona.', tag:'listening' });
+  if (wc < 150) improvements.push({ pri:'high', title:'Writing: desarrollar longitud y contenido', desc:`Escribiste ${wc} palabras. El TOEFL requiere al menos 150. Practica escribir ensayos completos con introducción, desarrollo y conclusión.`, tag:'writing' });
+  if (wPct2 < 80) improvements.push({ pri:'medium', title:'Writing: uso de conectores y cohesión', desc:"Incorpora conectores como 'However', 'Furthermore', 'In addition', 'As a result' para mejorar la coherencia del texto.", tag:'writing' });
+  improvements.push({ pri:'low', title:'Práctica de tiempo bajo presión', desc:'Simula condiciones reales: sin pausas, con cronómetro. El manejo del tiempo es clave en el TOEFL.', tag:'general' });
+
+  // Lessons
+const lessons = [
+  { type:'Reading', title:'Cómo encontrar la idea principal', desc:'Técnica de scanning y skimming para textos académicos TOEFL.', tag:'reading' },
+  { type:'Vocabulary', title:'Academic Word List (AWL)', desc:'Las 570 familias de palabras más comunes en textos académicos en inglés.', tag:'reading' },
+  { type:'Listening', title:'Note-taking para el TOEFL', desc:'Sistema de abreviaciones y símbolos para capturar ideas rápidamente.', tag:'listening' },
+  { type:'Listening', title:'Inferencia y actitud del hablante', desc:'Aprende a identificar el tono emocional y la posición del hablante.', tag:'listening' },
+  { type:'Writing', title:'Estructura del ensayo TOEFL', desc:'Plantilla de 5 párrafos: introducción, 3 argumentos, conclusión.', tag:'writing' },
+  { type:'Grammar', title:'Conectores y expresiones de transición', desc:'Lista completa de connectors clasificados por función (contraste, causa, adición).', tag:'writing' },
+  { type:'General', title:'Gestión del tiempo en el examen', desc:'Estrategias para no quedarse sin tiempo en Reading y Writing.', tag:'general' },
+  { type:'General', title:'Test-taking strategies', desc:'Cómo eliminar opciones incorrectas y aumentar tu puntaje en selección múltiple.', tag:'general' }
+];
+
+  const TAG_CLASSES = { reading:'tag-reading', listening:'tag-listening', writing:'tag-writing', general:'tag-general' };
+
+  document.getElementById('results-content').innerHTML = `
+    <!-- HERO SCORE -->
+    <div class="results-hero">
+      <h2>Tu puntaje TOEFL Practice</h2>
+      <div class="total-score-wrap">
+        <span class="total-score" id="anim-score">0</span>
+        <span class="total-score-denom"> / ${maxTotal}</span>
+      </div>
+      <div class="score-band ${bandClass}">${bandEmoji} ${band}</div>
+      <div class="score-bar-wrap">
+        <span class="score-bar-label">0</span>
+        <div class="score-bar"><div class="score-bar-fill" id="hero-bar" style="width:0%"></div></div>
+        <span class="score-bar-label">${maxTotal}</span>
+      </div>
+    </div>
+
+    <!-- SECTION SCORES -->
+    <div class="section-scores">
+      <div class="sec-score-card">
+        <div class="sec-score-icon">📖</div>
+        <div class="sec-score-name">Reading</div>
+        <div class="sec-score-val" style="color:var(--blue)">${scores.reading}</div>
+        <div class="sec-score-denom">/ 30</div>
+        <div class="sec-score-bar"><div class="sec-score-fill fill-reading" id="bar-r" style="width:0%"></div></div>
+      </div>
+      <div class="sec-score-card">
+        <div class="sec-score-icon">👂</div>
+        <div class="sec-score-name">Listening</div>
+        <div class="sec-score-val" style="color:var(--teal)">${scores.listening}</div>
+        <div class="sec-score-denom">/ 30</div>
+        <div class="sec-score-bar"><div class="sec-score-fill fill-listening" id="bar-l" style="width:0%"></div></div>
+      </div>
+      <div class="sec-score-card">
+        <div class="sec-score-icon">✍️</div>
+        <div class="sec-score-name">Writing</div>
+        <div class="sec-score-val" style="color:var(--purple)">${scores.writing}</div>
+        <div class="sec-score-denom">/ 30</div>
+        <div class="sec-score-bar"><div class="sec-score-fill fill-writing" id="bar-w" style="width:0%"></div></div>
+      </div>
+    </div>
+
+    <!-- SKILL ANALYSIS -->
+    <div class="analysis-card">
+      <div class="ac-header">
+        <span class="ac-icon">📊</span>
+        <h3>Análisis de habilidades</h3>
+      </div>
+      <div class="ac-body">
+        ${skills.map(s => `
+          <div class="skill-row">
+            <span class="skill-label">${s.label}</span>
+            <div class="skill-bar"><div class="skill-fill" style="width:0%;background:${s.color}" data-pct="${s.pct}"></div></div>
+            <span class="skill-pct">${s.pct}%</span>
+          </div>`).join('')}
+      </div>
+    </div>
+
+    <!-- IMPROVEMENT POINTS -->
+    <div class="analysis-card">
+      <div class="ac-header">
+        <span class="ac-icon">🎯</span>
+        <h3>Puntos de mejora prioritarios</h3>
+      </div>
+      <div class="ac-body">
+        <div class="improvement-list">
+          ${improvements.slice(0,5).map(imp => `
+            <div class="improve-item">
+              <div class="improve-priority pri-${imp.pri}">${imp.pri === 'high' ? '🔴' : imp.pri === 'medium' ? '🟡' : '🟢'}</div>
+              <div class="improve-content">
+                <h4>${imp.title}</h4>
+                <p>${imp.desc}</p>
+              </div>
+            </div>`).join('')}
+        </div>
+      </div>
+    </div>
+
+    <!-- LESSONS -->
+    <div class="analysis-card">
+      <div class="ac-header">
+        <span class="ac-icon">📚</span>
+        <h3>Lecciones recomendadas</h3>
+      </div>
+      <div class="ac-body">
+        <div class="lessons-grid">
+          ${lessons.map(l => `
+            <div class="lesson-card">
+              <div class="lesson-type">${l.type}</div>
+              <div class="lesson-title">${l.title}</div>
+              <div class="lesson-desc">${l.desc}</div>
+              <span class="lesson-tag ${TAG_CLASSES[l.tag]}">${l.tag}</span>
+            </div>`).join('')}
+        </div>
+      </div>
+    </div>
+
+    <!-- DETAILS TABLE -->
+    <div class="analysis-card">
+      <div class="ac-header"><span class="ac-icon">🔍</span><h3>Detalle por sección</h3></div>
+      <div class="ac-body">
+        <table style="width:100%;border-collapse:collapse;font-size:0.82rem">
+          <thead><tr style="border-bottom:1px solid var(--border)">
+            <th style="text-align:left;padding:8px 6px;color:var(--muted);font-weight:600;font-size:0.72rem;text-transform:uppercase;letter-spacing:.05em">Sección</th>
+            <th style="text-align:center;padding:8px 6px;color:var(--muted);font-weight:600;font-size:0.72rem;text-transform:uppercase;letter-spacing:.05em">Correctas</th>
+            <th style="text-align:center;padding:8px 6px;color:var(--muted);font-weight:600;font-size:0.72rem;text-transform:uppercase;letter-spacing:.05em">% Acierto</th>
+            <th style="text-align:right;padding:8px 6px;color:var(--muted);font-weight:600;font-size:0.72rem;text-transform:uppercase;letter-spacing:.05em">Puntaje</th>
+          </tr></thead>
+          <tbody>
+            <tr style="border-bottom:1px solid var(--border)">
+              <td style="padding:10px 6px;font-weight:600">📖 Reading</td>
+              <td style="text-align:center;padding:10px 6px;font-family:'IBM Plex Mono',monospace">${rCorr} / 7</td>
+              <td style="text-align:center;padding:10px 6px;color:${rPct>=70?'var(--green)':'var(--red)'};font-weight:600">${rPct}%</td>
+              <td style="text-align:right;padding:10px 6px;font-family:'IBM Plex Mono',monospace;font-weight:600;color:var(--blue)">${scores.reading}/30</td>
+            </tr>
+            <tr style="border-bottom:1px solid var(--border)">
+              <td style="padding:10px 6px;font-weight:600">👂 Listening</td>
+              <td style="text-align:center;padding:10px 6px;font-family:'IBM Plex Mono',monospace">${lCorr} / 7</td>
+              <td style="text-align:center;padding:10px 6px;color:${lPct>=70?'var(--green)':'var(--red)'};font-weight:600">${lPct}%</td>
+              <td style="text-align:right;padding:10px 6px;font-family:'IBM Plex Mono',monospace;font-weight:600;color:var(--teal)">${scores.listening}/30</td>
+            </tr>
+            <tr>
+              <td style="padding:10px 6px;font-weight:600">✍️ Writing</td>
+              <td style="text-align:center;padding:10px 6px;font-family:'IBM Plex Mono',monospace">${wc} palabras</td>
+              <td style="text-align:center;padding:10px 6px;color:${wPct2>=70?'var(--green)':'var(--red)'};font-weight:600">${wPct2}%</td>
+              <td style="text-align:right;padding:10px 6px;font-family:'IBM Plex Mono',monospace;font-weight:600;color:var(--purple)">${scores.writing}/30</td>
+            </tr>
+          </tbody>
+          <tfoot><tr style="border-top:2px solid var(--border)">
+            <td colspan="3" style="padding:10px 6px;font-weight:700;font-size:0.9rem">Total</td>
+            <td style="text-align:right;padding:10px 6px;font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:1rem;color:var(--navy)">${total}/90</td>
+          </tr></tfoot>
+        </table>
+      </div>
+    </div>
+
+    <button class="try-again-btn" onclick="retakeExam()">↺ Repetir simulacro</button>
+  `;
+
+  // Animate score counter
+  setTimeout(() => {
+    animateNumber('anim-score', 0, total, 1400);
+    document.getElementById('hero-bar').style.width = (total / maxTotal * 100) + '%';
+    document.getElementById('bar-r').style.width = (scores.reading / 30 * 100) + '%';
+    document.getElementById('bar-l').style.width = (scores.listening / 30 * 100) + '%';
+    document.getElementById('bar-w').style.width = (scores.writing / 30 * 100) + '%';
+    document.querySelectorAll('.skill-fill').forEach(el => {
+      el.style.width = el.dataset.pct + '%';
+    });
+  }, 200);
+}
+
+function animateNumber(id, from, to, duration) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const start = performance.now();
+  function step(ts) {
+    const progress = Math.min((ts - start) / duration, 1);
+    const ease = 1 - Math.pow(1 - progress, 3);
+    el.textContent = Math.round(from + (to - from) * ease);
+    if (progress < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+function retakeExam() {
+  answers = { reading: {}, listening: {}, writing: { text: '', wordCount: 0 } };
+  scores  = { reading: 0, listening: 0, writing: 0 };
+  timers  = {};
+  transcriptShown = false;
+  speechSynthesis.cancel(); speaking = false;
+  goToSection(0);
+}
+
+speechSynthesis.onvoiceschanged = () => speechSynthesis.getVoices();
+</script>
+</body>
+</html>
