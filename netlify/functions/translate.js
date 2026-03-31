@@ -28,10 +28,10 @@ Cuando des ejemplos en ${langName}, escríbelos en negrita usando **texto**.
 Sé conciso pero completo. Usa emojis moderadamente para hacer la explicación más amena.
 Si te preguntan sobre pronunciación, usa notación fonética simple que un hispanohablante pueda entender.`;
 
-    const messages = chatHistory.slice(-12); // últimos 12 turnos para contexto
+     messages = chatHistory.slice(-12); // últimos 12 turnos para contexto
 
     try {
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
+       res = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
         headers: {
           'x-api-key': process.env.ANTHROPIC_API_KEY,
@@ -47,13 +47,13 @@ Si te preguntan sobre pronunciación, usa notación fonética simple que un hisp
       });
 
       if (!res.ok) {
-        const errText = await res.text();
+         errText = await res.text();
         console.error('Anthropic chat error:', errText);
         return { statusCode: 500, headers, body: JSON.stringify({ error: 'Error del asistente IA' }) };
       }
 
-      const data  = await res.json();
-      const reply = data.content?.[0]?.text || 'No pude generar respuesta.';
+       data  = await res.json();
+       reply = data.content?.[0]?.text || 'No pude generar respuesta.';
       return { statusCode: 200, headers, body: JSON.stringify({ reply }) };
 
     } catch(e) {
@@ -64,6 +64,23 @@ Si te preguntan sobre pronunciación, usa notación fonética simple que un hisp
 
   // ── MODO TRADUCCIÓN ─────────────────────────────────────────────────────
   const { text, lang = 'en' } = body;
+
+  if (!process.env.ANTHROPIC_API_KEY) {
+  return {
+    statusCode: 200,
+    headers,
+    body: JSON.stringify({
+      traduccion: text,
+      nivel: "N/A",
+      pronunciacion: "",
+      pronunciacion_consejo: "",
+      gramatica: null,
+      uso: "Modo básico activo (sin IA)",
+      ejemplo_contexto: "",
+      alternativas: []
+    }),
+  };
+}
 
   if (!text || text.trim().length === 0) {
     return { statusCode: 400, headers, body: JSON.stringify({ error: 'Texto requerido' }) };
@@ -121,7 +138,10 @@ Reglas:
     const rawText = data.content?.[0]?.text || '';
 
     // Parse JSON — strip any markdown fences just in case
-    const clean = rawText.replace(/```json?/gi,'').replace(/```/g,'').trim();
+    const clean = rawText
+  .replace(/```json?/gi,'')
+  .replace(/```/g,'')
+  .trim();
     let result;
     try {
       result = JSON.parse(clean);
