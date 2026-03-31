@@ -492,7 +492,7 @@ async function speak(text, langCode) {
 
   if (ttsCache[cacheKey]) { playAudioData(ttsCache[cacheKey]); return; }
   try {
-    const stored = localStorage.getItem('tts_'+cacheKey);
+    const stored = localStorage.getItem(cacheKey);
     if (stored) { ttsCache[cacheKey]=stored; playAudioData(stored); return; }
   } catch(e) {}
 
@@ -507,13 +507,13 @@ async function speak(text, langCode) {
     const { audio } = await res.json();
     if (audio) {
       ttsCache[cacheKey] = audio;
-      try { localStorage.setItem('tts_'+cacheKey, audio); } catch(e) {}
+      try { localStorage.setItem(cacheKey, audio); } catch(e) {}
       playAudioData(audio);
     }
   } catch(e) {
     // Fallback to browser TTS
     const synth = window.speechSynthesis;
-    if (synth) { synth.cancel(); const u=new SpeechSynthesisUtterance(text); u.lang=LANGS[langCode]?.voice||'en-US'; u.rate=0.85; synth.speak(u); }
+    if (synth) { synth.cancel(); const u=new SpeechSynthesisUtterance(text); u.lang=LANGS[langCode]?.voice||'en-US'; u.rate=0.95; synth.speak(u); }
   }
 }
 
@@ -528,7 +528,7 @@ function setWave(on) {
 }
 
 function speakInput()   { speak(document.getElementById('input-text').value.trim(), currentLang); }
-function speakResult()  { if (currentResult) speak(currentResult.original, currentLang); }
+function speakResult()  { speak(currentResult.traduccion, currentLang); }
 function speakExample() { if (currentResult?.ejemplo_contexto) speak(currentResult.ejemplo_contexto, currentLang); }
 
 // ── TRANSLATE ──────────────────────────────────────────────────────────────
